@@ -6,7 +6,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class FearlessWorkspaceService implements WorkspaceService {
 
-  FearlessLanguageServer server;
+  private FearlessLanguageServer server;
 
   public FearlessWorkspaceService(FearlessLanguageServer server) {
     this.server = server;
