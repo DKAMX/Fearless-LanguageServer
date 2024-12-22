@@ -26,10 +26,11 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams initializeParams) {
-    InitializeResult result = new InitializeResult(new ServerCapabilities());
-    result.getCapabilities().setTextDocumentSync(TextDocumentSyncKind.Full);
-    result.getCapabilities().setCompletionProvider(new CompletionOptions());
-    return CompletableFuture.completedFuture(result);
+    var capabilities = new ServerCapabilities();
+    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
+    capabilities.setCompletionProvider(new CompletionOptions());
+    capabilities.setSemanticTokensProvider(textDocumentService.SEMANTIC_TOKENS_PROVIDER);
+    return CompletableFuture.completedFuture(new InitializeResult(capabilities));
   }
 
   @Override
