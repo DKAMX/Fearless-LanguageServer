@@ -10,9 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import main.CompilerFrontEnd.ProgressVerbosity;
+import main.CompilerFrontEnd.Verbosity;
+import main.InputOutput;
+import main.java.LogicMainJava;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -30,7 +37,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 
 public class FearlessTextDocumentService implements TextDocumentService {
 
-  public static final SemanticTokensWithRegistrationOptions SEMANTIC_TOKENS_PROVIDER;
+  public static final SemanticTokensWithRegistrationOptions SEMANTIC_TOKENS_PROVIDER = new SemanticTokensWithRegistrationOptions();
 
   public static final List<String> TOKEN_TYPES = List.of(SemanticTokenTypes.Class,
       SemanticTokenTypes.Comment, SemanticTokenTypes.Keyword, SemanticTokenTypes.Method,
@@ -48,10 +55,9 @@ public class FearlessTextDocumentService implements TextDocumentService {
     var legend = new SemanticTokensLegend();
     legend.setTokenTypes(TOKEN_TYPES);
     legend.setTokenModifiers(List.of());
-    SEMANTIC_TOKENS_PROVIDER = new SemanticTokensWithRegistrationOptions();
+    SEMANTIC_TOKENS_PROVIDER.setFull(true);
     SEMANTIC_TOKENS_PROVIDER.setLegend(legend);
     SEMANTIC_TOKENS_PROVIDER.setRange(false);
-    SEMANTIC_TOKENS_PROVIDER.setFull(true);
   }
 
   private FearlessLanguageServer server;
@@ -68,8 +74,8 @@ public class FearlessTextDocumentService implements TextDocumentService {
     for (var token : tokens) {
       // Calculate relative positions
       var line = token.getLine() - prevLine;
-      var start = (line == 0) ? token.getCharPositionInLine() - prevChar
-          : token.getCharPositionInLine();
+      var start =
+          line == 0 ? token.getCharPositionInLine() - prevChar : token.getCharPositionInLine();
 
       // Add token data
       data.add(line);
@@ -89,6 +95,7 @@ public class FearlessTextDocumentService implements TextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams didOpenTextDocumentParams) {
+    this.server.logMessage("didOpen: %s".formatted(didOpenTextDocumentParams));
   }
 
   @Override
@@ -97,10 +104,12 @@ public class FearlessTextDocumentService implements TextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams didCloseTextDocumentParams) {
+    this.server.logMessage("didClose: %s".formatted(didCloseTextDocumentParams));
   }
 
   @Override
   public void didSave(DidSaveTextDocumentParams didSaveTextDocumentParams) {
+    this.server.logMessage("didSave: %s".formatted(didSaveTextDocumentParams));
   }
 
   @Override
@@ -139,5 +148,20 @@ public class FearlessTextDocumentService implements TextDocumentService {
     this.server.logMessage("semanticTokensRange: %s".formatted(params));
 
     return TextDocumentService.super.semanticTokensRange(params);
+  }
+
+  @Override
+  public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
+      CompletionParams position) {
+    var path = Path.of(URI.create(position.getTextDocument().getUri())).getParent();
+    var io = InputOutput.userFolder(null, List.of(), path);
+    var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
+    var fullProgram = main.parse();
+
+    return CompletableFuture.supplyAsync(() -> {
+      var completions = new ArrayList<CompletionItem>();
+      fullProgram.ds().keySet().forEach(key -> completions.add(new CompletionItem(key.name())));
+      return Either.forRight(new CompletionList(false, completions));
+    });
   }
 }
