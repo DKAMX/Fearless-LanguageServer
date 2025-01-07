@@ -1,6 +1,13 @@
 package io.github.dkamx.fearless;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import main.CompilerFrontEnd.ProgressVerbosity;
+import main.CompilerFrontEnd.Verbosity;
+import main.InputOutput;
+import main.java.LogicMainJava;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -11,6 +18,7 @@ import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -88,5 +96,24 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
       return;
     }
     this.client.logMessage(new MessageParams(MessageType.Info, message));
+  }
+
+  @JsonRequest("fearless/build")
+  public CompletableFuture<Void> build(BuildParams message) {
+    this.logMessage("Fearless build: %s".formatted(message.path()));
+
+    var packagePath = Path.of(URI.create(message.path())).getParent();
+    var io = InputOutput.userFolder(null, List.of(), packagePath);
+    var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
+
+    var fullProgram = main.parse();
+//    main.wellFormednessFull(fullProgram);
+//    var program = main.inference(fullProgram);
+//    main.wellFormednessCore(program);
+//    var resolvedCalls = main.typeSystem(program);
+//    var mir = main.lower(program, resolvedCalls);
+//    var exe = main.codeGeneration(mir);
+
+    return CompletableFuture.completedFuture(null);
   }
 }
