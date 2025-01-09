@@ -37,7 +37,7 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     var capabilities = new ServerCapabilities();
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
     capabilities.setCompletionProvider(new CompletionOptions());
-    capabilities.setSemanticTokensProvider(textDocumentService.SEMANTIC_TOKENS_PROVIDER);
+    capabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
     return CompletableFuture.completedFuture(new InitializeResult(capabilities));
   }
 
@@ -107,8 +107,9 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
 
     var fullProgram = main.parse();
-//    main.wellFormednessFull(fullProgram);
-//    var program = main.inference(fullProgram);
+    main.wellFormednessFull(fullProgram);
+    var program = main.inference(fullProgram);
+    FearlessTextDocumentService.programCache = program;
 //    main.wellFormednessCore(program);
 //    var resolvedCalls = main.typeSystem(program);
 //    var mir = main.lower(program, resolvedCalls);
