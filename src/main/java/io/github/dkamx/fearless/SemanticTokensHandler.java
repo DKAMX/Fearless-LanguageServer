@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Token;
 import org.eclipse.lsp4j.SemanticTokenTypes;
@@ -33,12 +32,8 @@ public class SemanticTokensHandler {
 
   /**
    * Handles the semantic tokens request
-   *
-   * @param uri the URI of the file
-   * @return a completable future with the semantic tokens
-   * @throws IOException if an I/O error occurs
    */
-  public static CompletableFuture<SemanticTokens> handle(String uri) throws IOException {
+  public static SemanticTokens handle(String uri) throws IOException {
     var filePath = Path.of(URI.create(uri));
     var fileContent = Files.readString(filePath).replace("\r", "");
     return handleContent(fileContent);
@@ -46,11 +41,8 @@ public class SemanticTokensHandler {
 
   /**
    * Handles the semantic tokens request
-   *
-   * @param content the content of the file
-   * @return a completable future with the semantic tokens
    */
-  public static CompletableFuture<SemanticTokens> handleContent(String content) {
+  public static SemanticTokens handleContent(String content) {
     var lexer = new FearlessLexer(CharStreams.fromString(content));
     var tokens = lexer.getAllTokens().stream()
         .filter(token -> {
@@ -58,15 +50,11 @@ public class SemanticTokensHandler {
           return SemanticTokenTypes.Keyword.equals(type)
               || SemanticTokenTypes.Comment.equals(type);
         }).toList();
-    return CompletableFuture.supplyAsync(() -> encodeTokens(tokens, lexer));
+    return encodeTokens(tokens, lexer);
   }
 
   /**
    * Encodes the tokens into semantic tokens
-   *
-   * @param tokens the tokens
-   * @param lexer  the lexer
-   * @return the semantic tokens
    */
   public static SemanticTokens encodeTokens(List<? extends Token> tokens, FearlessLexer lexer) {
     var data = new ArrayList<Integer>();
@@ -96,9 +84,6 @@ public class SemanticTokensHandler {
 
   /**
    * Maps the ANTLR token type to the LSP token type
-   *
-   * @param symbolicName
-   * @return the LSP token type
    */
   public static String getTokenTypeByName(String symbolicName) {
     return switch (symbolicName) {
