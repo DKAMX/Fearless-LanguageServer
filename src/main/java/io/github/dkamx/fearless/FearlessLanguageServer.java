@@ -8,7 +8,6 @@ import main.CompilerFrontEnd.ProgressVerbosity;
 import main.CompilerFrontEnd.Verbosity;
 import main.InputOutput;
 import main.java.LogicMainJava;
-import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
@@ -35,9 +34,9 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams initializeParams) {
     var capabilities = new ServerCapabilities();
-    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
-    capabilities.setCompletionProvider(new CompletionOptions());
+    capabilities.setCompletionProvider(CompletionHandler.PROVIDER);
     capabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
+    capabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
     return CompletableFuture.completedFuture(new InitializeResult(capabilities));
   }
 
@@ -100,20 +99,16 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
 
   @JsonRequest("fearless/build")
   public CompletableFuture<Void> build(BuildParams message) {
-    this.logMessage("Fearless build: %s".formatted(message.path()));
+    this.logMessage("Fearless build: %s".formatted(message.uri()));
 
-    var packagePath = Path.of(URI.create(message.path())).getParent();
+    var packagePath = Path.of(URI.create(message.uri()));
     var io = InputOutput.userFolder(null, List.of(), packagePath);
     var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
-
     var fullProgram = main.parse();
     main.wellFormednessFull(fullProgram);
     var program = main.inference(fullProgram);
-    FearlessTextDocumentService.programCache = program;
-//    main.wellFormednessCore(program);
-//    var resolvedCalls = main.typeSystem(program);
-//    var mir = main.lower(program, resolvedCalls);
-//    var exe = main.codeGeneration(mir);
+    main.wellFormednessCore(program);
+    WorkspaceFileStore.programCache = program;
 
     return CompletableFuture.completedFuture(null);
   }
