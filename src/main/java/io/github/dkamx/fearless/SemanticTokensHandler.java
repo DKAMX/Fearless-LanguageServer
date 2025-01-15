@@ -3,7 +3,6 @@ package io.github.dkamx.fearless;
 import generated.FearlessLexer;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +12,7 @@ import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
+import parser.Parser;
 
 public class SemanticTokensHandler {
 
@@ -34,9 +34,7 @@ public class SemanticTokensHandler {
    * Handles the semantic tokens request
    */
   public static SemanticTokens handle(String uri) throws IOException {
-    var filePath = Path.of(URI.create(uri));
-    var fileContent = Files.readString(filePath).replace("\r", "");
-    return handleContent(fileContent);
+    return handleContent(Parser.of(Path.of(URI.create(uri))).content());
   }
 
   /**
