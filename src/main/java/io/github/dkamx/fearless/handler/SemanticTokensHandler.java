@@ -1,4 +1,4 @@
-package io.github.dkamx.fearless;
+package io.github.dkamx.fearless.handler;
 
 import generated.FearlessLexer;
 import java.io.IOException;
