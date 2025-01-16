@@ -1,5 +1,7 @@
 package io.github.dkamx.fearless;
 
+import io.github.dkamx.fearless.handler.CompletionHandler;
+import io.github.dkamx.fearless.handler.SemanticTokensHandler;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
@@ -42,12 +44,12 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
 
   @Override
   public void initialized(InitializedParams params) {
-    this.logMessage("initialized: %s".formatted(params));
+    this.infoMessage("initialized: %s".formatted(params));
   }
 
   @Override
   public CompletableFuture<Object> shutdown() {
-    this.logMessage("shutdown");
+    this.infoMessage("shutdown");
 
     return null;
   }
@@ -63,14 +65,14 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
 
   @Override
   public TextDocumentService getTextDocumentService() {
-    this.logMessage("getTextDocumentService");
+    this.infoMessage("getTextDocumentService");
 
     return this.textDocumentService;
   }
 
   @Override
   public WorkspaceService getWorkspaceService() {
-    this.logMessage("getWorkspaceService");
+    this.infoMessage("getWorkspaceService");
 
     return this.workspaceService;
   }
@@ -90,7 +92,15 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     this.client = languageClient;
   }
 
-  public void logMessage(String message) {
+
+  public void errorMessage(String message) {
+    if (this.client == null) {
+      return;
+    }
+    this.client.logMessage(new MessageParams(MessageType.Error, message));
+  }
+
+  public void infoMessage(String message) {
     if (this.client == null) {
       return;
     }
@@ -99,7 +109,7 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
 
   @JsonRequest("fearless/build")
   public CompletableFuture<Void> build(BuildParams message) {
-    this.logMessage("Fearless build: %s".formatted(message.uri()));
+    this.infoMessage("Fearless build: %s".formatted(message.uri()));
 
     var packagePath = Path.of(URI.create(message.uri()));
     var io = InputOutput.userFolder(null, List.of(), packagePath);
