@@ -1,8 +1,13 @@
-package io.github.dkamx.fearless;
+package io.github.dkamx.fearless.handler;
 
+import generated.FearlessLexer;
+import generated.FearlessParser;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.eclipse.lsp4j.Position;
 
 /**
@@ -32,6 +37,17 @@ public class CodeNode {
     }
     child.setParent(this);
     this.children.add(child);
+  }
+
+  public static CodeNode createNode(String content) {
+    var lexer = new FearlessLexer(CharStreams.fromString(content));
+    var tokenStream = new CommonTokenStream(lexer);
+    tokenStream.fill();
+    var parser = new FearlessParser(tokenStream);
+    var listener = new CodeNodeListener();
+    var treeWalker = new ParseTreeWalker();
+    treeWalker.walk(listener, parser.nudeProgram());
+    return listener.root;
   }
 
   /**

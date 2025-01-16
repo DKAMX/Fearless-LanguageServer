@@ -1,4 +1,4 @@
-package io.github.dkamx.fearless;
+package io.github.dkamx.fearless.handler;
 
 import generated.FearlessBaseListener;
 import generated.FearlessParser.AliasContext;
@@ -6,7 +6,7 @@ import generated.FearlessParser.BblockContext;
 import generated.FearlessParser.BlockContext;
 import generated.FearlessParser.NudeProgramContext;
 import generated.FearlessParser.TopDecContext;
-import io.github.dkamx.fearless.CodeNode.Type;
+import io.github.dkamx.fearless.handler.CodeNode.Type;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.eclipse.lsp4j.Position;
 
