@@ -3,7 +3,6 @@ package io.github.dkamx.fearless;
 import io.github.dkamx.fearless.handler.CompletionHandler;
 import io.github.dkamx.fearless.handler.SemanticTokensHandler;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.CompletionItem;
@@ -24,41 +23,38 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 public class FearlessTextDocumentService implements TextDocumentService {
 
   private final FearlessLanguageServer server;
+  private final CompletionHandler CompletionHandler;
 
   public FearlessTextDocumentService(FearlessLanguageServer server) {
     this.server = server;
+    this.CompletionHandler = new CompletionHandler(server);
   }
 
   @Override
   public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
       CompletionParams position) {
-    // TODO program should be cached automatically
     var uri = position.getTextDocument().getUri();
     var pos = position.getPosition();
+    if (WorkspaceFileStore.programCache == null) {
+      WorkspaceFileStore.programCache = this.server.compilerLogic.build();
+    }
     return CompletableFuture.supplyAsync(
-        () -> Either.forLeft(CompletionHandler.handle(uri, pos.getLine(), pos.getCharacter())));
+        () -> Either.forLeft(CompletionHandler.handle(uri, pos.getLine(), pos.getCharacter() - 1)));
   }
 
   @Override
   public void didOpen(DidOpenTextDocumentParams didOpenTextDocumentParams) {
     this.server.infoMessage("didOpen: %s".formatted(didOpenTextDocumentParams));
 
-    try {
-      WorkspaceFileStore.cacheFile(didOpenTextDocumentParams.getTextDocument().getUri());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    WorkspaceFileStore.cacheFile(didOpenTextDocumentParams.getTextDocument().getUri());
   }
 
   @Override
   public void didChange(DidChangeTextDocumentParams didChangeTextDocumentParams) {
 //    this.server.logMessage("didChange: %s".formatted(didChangeTextDocumentParams));
-
-    try {
-      WorkspaceFileStore.cacheFile(didChangeTextDocumentParams.getTextDocument().getUri());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+//    var uri = didChangeTextDocumentParams.getTextDocument().getUri();
+//    var content = didChangeTextDocumentParams.getContentChanges().getFirst().getText();
+//    WorkspaceFileStore.cacheFile(uri, content);
   }
 
   @Override
@@ -70,11 +66,7 @@ public class FearlessTextDocumentService implements TextDocumentService {
   public void didSave(DidSaveTextDocumentParams didSaveTextDocumentParams) {
     this.server.infoMessage("didSave: %s".formatted(didSaveTextDocumentParams));
 
-    try {
-      WorkspaceFileStore.cacheFile(didSaveTextDocumentParams.getTextDocument().getUri());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    WorkspaceFileStore.cacheFile(didSaveTextDocumentParams.getTextDocument().getUri());
   }
 
   @Override

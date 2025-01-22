@@ -1,15 +1,9 @@
 package io.github.dkamx.fearless;
 
+import io.github.dkamx.fearless.handler.CompilerLogic;
 import io.github.dkamx.fearless.handler.CompletionHandler;
 import io.github.dkamx.fearless.handler.SemanticTokensHandler;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import main.CompilerFrontEnd.ProgressVerbosity;
-import main.CompilerFrontEnd.Verbosity;
-import main.InputOutput;
-import main.java.LogicMainJava;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InitializedParams;
@@ -29,12 +23,14 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class FearlessLanguageServer implements LanguageServer, LanguageClientAware {
 
-  LanguageClient client;
+  public LanguageClient client;
+  public CompilerLogic compilerLogic = new CompilerLogic(this);
   FearlessTextDocumentService textDocumentService = new FearlessTextDocumentService(this);
   FearlessWorkspaceService workspaceService = new FearlessWorkspaceService(this);
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams initializeParams) {
+    this.compilerLogic.setUriWorkspace(initializeParams.getWorkspaceFolders().getFirst().getUri());
     var capabilities = new ServerCapabilities();
     capabilities.setCompletionProvider(CompletionHandler.PROVIDER);
     capabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
@@ -92,7 +88,6 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     this.client = languageClient;
   }
 
-
   public void errorMessage(String message) {
     if (this.client == null) {
       return;
@@ -108,18 +103,14 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
   }
 
   @JsonRequest("fearless/build")
-  public CompletableFuture<Void> build(BuildParams message) {
+  public CompletableFuture<String> build(BuildParams message) {
     this.infoMessage("Fearless build: %s".formatted(message.uri()));
 
-    var packagePath = Path.of(URI.create(message.uri()));
-    var io = InputOutput.userFolder(null, List.of(), packagePath);
-    var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
-    var fullProgram = main.parse();
-    main.wellFormednessFull(fullProgram);
-    var program = main.inference(fullProgram);
-    main.wellFormednessCore(program);
+    var program = this.compilerLogic.build();
+    if (program == null) {
+      return CompletableFuture.completedFuture("Build failed");
+    }
     WorkspaceFileStore.programCache = program;
-
-    return CompletableFuture.completedFuture(null);
+    return CompletableFuture.completedFuture("Build done");
   }
 }
