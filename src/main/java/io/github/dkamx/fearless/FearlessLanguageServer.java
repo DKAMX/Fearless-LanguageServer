@@ -1,5 +1,6 @@
 package io.github.dkamx.fearless;
 
+import io.github.dkamx.fearless.handler.SemanticTokensHandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 import org.eclipse.lsp4j.InitializeParams;
@@ -23,7 +24,9 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams initializeParams) {
     LOGGER.info("initialize\n%s".formatted(initializeParams));
+    // register server capabilities
     var serverCapabilities = new ServerCapabilities();
+    serverCapabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
     return CompletableFuture.completedFuture(new InitializeResult(serverCapabilities));
   }
 
