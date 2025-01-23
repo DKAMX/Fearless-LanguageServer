@@ -72,4 +72,87 @@ public class Sample {
         .compare(fruit1: Fruit, fruit2: Fruit): Nat,
         }
       """;
+
+  public static final String HELLO_ERR = """
+      package test
+      alias base.Main as Main,
+      alias base.caps.UnrestrictedIO as , // error
+      Test:Main {sys -> UnrestrictedIO#sys.println("Hello, World!")}
+      //prints Hello, World!
+      """;
+
+  public static final String LIST = """
+      package test
+      alias base.Main as Main,
+      alias base.Block as Block,
+      alias base.caps.UnrestrictedIO as UnrestrictedIO,
+      alias base.List as List,
+      Test:Main {sys -> Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {data.flow.map{e -> e}}
+        .return {io.println("Hello, World!")}
+      }
+      //prints Hello, World!
+      """;
+
+  public static final String LIST_CMPL = """
+      package test
+      alias base.Main as Main,
+      alias base.Block as Block,
+      alias base.caps.UnrestrictedIO as UnrestrictedIO,
+      alias base.List as List,
+      Test:Main {sys -> Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {data.flow.map{e -> base.Id.id(e)}}
+        .return {io.println("Hello, World!")}
+      }
+      //prints Hello, World!
+      """;
+
+  public static final String LIST2 = """
+      package test
+      alias base.Main as Main,
+      alias base.Block as Block,
+      alias base.caps.UnrestrictedIO as UnrestrictedIO,
+      alias base.List as List,
+      Test:Main {sys -> Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {data.flow.map{e -> e.str}}
+        .return {io.println("Hello, World!")}
+      }
+      //prints Hello, World!
+      """;
+
+  public static final String LIST2_CMPL = """
+      package test
+      alias base.Main as Main,
+      alias base.Block as Block,
+      alias base.caps.UnrestrictedIO as UnrestrictedIO,
+      alias base.List as List,
+      Test:Main {sys -> Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {data.flow.map{e -> base.Id.id(e.str)}}
+        .return {io.println("Hello, World!")}
+      }
+      //prints Hello, World!
+      """;
+
+  public static final String LIST_CMPL_BLOCK = """
+      package test
+      alias base.Main as Main,
+      alias base.Block as Block,
+      alias base.caps.UnrestrictedIO as UnrestrictedIO,
+      alias base.List as List,
+      Test:Main {sys -> Id.id(Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {data.flow.map{e -> e}})
+        .return {io.println("Hello, World!")}
+      }
+      //prints Hello, World!
+      """;
 }

@@ -1,19 +1,17 @@
 package io.github.dkamx.fearless;
 
+import static io.github.dkamx.fearless.TestHelper.URI;
+import static io.github.dkamx.fearless.TestHelper.buildProgram;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import ast.Program;
+import io.github.dkamx.fearless.handler.CodeNode;
+import io.github.dkamx.fearless.handler.CodeNode.Type;
+import io.github.dkamx.fearless.handler.CodeNodeX;
 import io.github.dkamx.fearless.handler.CompletionLogic;
-import java.util.List;
-import main.CompilerFrontEnd.ProgressVerbosity;
-import main.CompilerFrontEnd.Verbosity;
-import main.InputOutput;
-import main.java.LogicMainJava;
+import io.github.dkamx.fearless.visitors.XTypeVisitor;
 import org.junit.jupiter.api.Test;
 
 public class CompletionTest {
-
-  static String URI = "file:///F:/NewDevelopment/Fearless-LanguageServer/Dummy0.fear";
 
   @Test
   public void test() {
@@ -55,13 +53,38 @@ public class CompletionTest {
     assertEquals(12, list.size());
   }
 
-  Program buildProgram(String content) {
-    var io = InputOutput.programmaticAuto(List.of(content));
-    var main = LogicMainJava.of(io, new Verbosity(true, true, ProgressVerbosity.Full));
-    var fullProgram = main.parse();
-    main.wellFormednessFull(fullProgram);
-    var program = main.inference(fullProgram);
-    main.wellFormednessCore(program);
-    return program;
+  @Test
+  public void test6() {
+    var program = buildProgram(Sample.LIST_CMPL);
+    var decs = CompletionLogic.findDecs(program, URI);
+    var lambda = decs.getFirst().lambda();
+    var visitor = new XTypeVisitor();
+    lambda.accept(visitor);
+    assertEquals("{e=base.Nat}", visitor.getResult().toString());
+  }
+
+  @Test
+  public void testAssistXType() {
+    var node = CodeNode.createNode(Sample.LIST);
+    var xNode = node.findNode(8, 27, Type.X);
+    var content = CompletionLogic.assistType(Sample.LIST, (CodeNodeX) xNode);
+    assertEquals(Sample.LIST_CMPL, content);
+  }
+
+  @Test
+  public void testAssistXType2() {
+    var node = CodeNode.createNode(Sample.LIST);
+    var eNode = node.findNode(8, 29, Type.E);
+    var content = CompletionLogic.assistType(Sample.LIST, eNode);
+    assertEquals(Sample.LIST_CMPL_BLOCK, content);
+  }
+
+  @Test
+  public void testCompleteMethod() {
+    var program = buildProgram(Sample.LIST_CMPL);
+    var map = CompletionLogic.collectMethod(program, URI);
+    assertEquals(
+        "[.byte, **, <=, .hash, .shiftRight, .assertEq, .bitwiseAnd, .abs, .str, .shiftLeft, .offset, .int, ==, .float, .nat, %, .bitwiseOr, *, +, -, /, .xor, <, !=, >, >=]",
+        map.get("base.Nat").toString());
   }
 }

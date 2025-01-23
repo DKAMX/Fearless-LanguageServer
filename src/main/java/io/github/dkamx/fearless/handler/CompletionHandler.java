@@ -1,6 +1,8 @@
 package io.github.dkamx.fearless.handler;
 
+import io.github.dkamx.fearless.FearlessLanguageServer;
 import io.github.dkamx.fearless.WorkspaceFileStore;
+import io.github.dkamx.fearless.handler.CodeNode.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -11,6 +13,12 @@ import org.eclipse.lsp4j.CompletionOptions;
 public class CompletionHandler {
 
   public static final CompletionOptions PROVIDER = new CompletionOptions(false, List.of("."));
+
+  FearlessLanguageServer server;
+
+  public CompletionHandler(FearlessLanguageServer server) {
+    this.server = server;
+  }
 
   public static List<CompletionItem> createItemList(List<String> keywords,
       CompletionItemKind kind) {
@@ -23,19 +31,6 @@ public class CompletionHandler {
         .toList();
   }
 
-  public static List<CompletionItem> handle(String uri, int line, int character) {
-    if (WorkspaceFileStore.programCache == null) {
-      return List.of();
-    }
-    var list = new ArrayList<>(completeAliasKeyword());
-    list.addAll(completeKeyword());
-    list.addAll(completeType(uri));
-    list.addAll(completeMethod(uri, line, character));
-//    list.addAll(completeVariable(uri, line, character));
-
-    return list;
-  }
-
   static List<CompletionItem> completeAliasKeyword() {
     return createItemList(List.of("alias", "as"), CompletionItemKind.Keyword);
   }
@@ -45,7 +40,7 @@ public class CompletionHandler {
         CompletionItemKind.Keyword);
   }
 
-  static List<CompletionItem> completeMethod(String uri, int line, int character) {
+  static List<CompletionItem> completeMethod(String uri) {
     var mapMethod = CompletionLogic.collectMethod(WorkspaceFileStore.programCache, uri);
     var mapXSig = CompletionLogic.collectXSig(WorkspaceFileStore.programCache, uri);
     var method = mapMethod.entrySet().stream()
@@ -70,5 +65,29 @@ public class CompletionHandler {
 
   static List<CompletionItem> completeVariable(String uri, int line, int character) {
     return createItemList(List.of(), CompletionItemKind.Variable);
+  }
+
+  public List<CompletionItem> handle(String uri, int line, int character) {
+    var list = new ArrayList<>(completeAliasKeyword());
+
+    var content = WorkspaceFileStore.sourceFiles.get(uri);
+    var rootNode = CodeNode.createNode(content);
+    var node = rootNode.findNode(line, character, Type.X);
+
+    if (node instanceof CodeNodeX xNode) {
+      var xName = xNode.content;
+      var assistContent = CompletionLogic.assistType(content, xNode);
+      var program = this.server.compilerLogic.build(uri, assistContent);
+      var mapXType = CompletionLogic.collectXType(program, uri);
+      var mapMethod = CompletionLogic.collectMethod(WorkspaceFileStore.programCache, uri);
+      var xMethod = mapMethod.get(mapXType.get(xName));
+      list.addAll(createItemList(xMethod.stream().toList(), CompletionItemKind.Method));
+    }
+
+//    list.addAll(completeKeyword());
+//    list.addAll(completeType(uri));
+//    list.addAll(completeMethod(uri));
+
+    return list;
   }
 }

@@ -20,11 +20,24 @@ public class CodeNode {
   public Position start;
   public Position end;
   public Type type;
+  public String content;
 
-  public CodeNode(Position start, Position end, Type type) {
+  public CodeNode(Position start, Position end, Type type, String content) {
     this.start = start;
     this.end = end;
     this.type = type;
+    this.content = content;
+  }
+
+  public static CodeNode createNode(String content) {
+    var lexer = new FearlessLexer(CharStreams.fromString(content));
+    var tokenStream = new CommonTokenStream(lexer);
+    tokenStream.fill();
+    var parser = new FearlessParser(tokenStream);
+    var listener = new CodeNodeListener();
+    var treeWalker = new ParseTreeWalker();
+    treeWalker.walk(listener, parser.nudeProgram());
+    return listener.root;
   }
 
   public void setParent(CodeNode parent) {
@@ -37,17 +50,6 @@ public class CodeNode {
     }
     child.setParent(this);
     this.children.add(child);
-  }
-
-  public static CodeNode createNode(String content) {
-    var lexer = new FearlessLexer(CharStreams.fromString(content));
-    var tokenStream = new CommonTokenStream(lexer);
-    tokenStream.fill();
-    var parser = new FearlessParser(tokenStream);
-    var listener = new CodeNodeListener();
-    var treeWalker = new ParseTreeWalker();
-    treeWalker.walk(listener, parser.nudeProgram());
-    return listener.root;
   }
 
   /**
@@ -66,6 +68,11 @@ public class CodeNode {
 
   public boolean contains(int line, int character) {
     return !before(line, character) && !after(line, character);
+  }
+
+  public boolean onEdge(int line, int character) {
+    return start.getLine() == line && start.getCharacter() == character
+        || end.getLine() == line && end.getCharacter() == character;
   }
 
   public CodeNode findNode(int line, int character, Type type) {
@@ -100,6 +107,6 @@ public class CodeNode {
   }
 
   public enum Type {
-    NudeProgram, Alias, TopDec, Block, Bblock
+    NudeProgram, Alias, TopDec, Block, Bblock, E, PostE, CallOp, X
   }
 }

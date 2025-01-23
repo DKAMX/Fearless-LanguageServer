@@ -1,14 +1,15 @@
 package io.github.dkamx.fearless.handler;
 
 import ast.E;
+import ast.E.Meth;
 import ast.E.X;
 import ast.Program;
 import ast.T.Dec;
 import files.HasPos;
-import generated.FearlessLexer;
+import id.Id.DecId;
 import io.github.dkamx.fearless.visitors.PropagatorVisitor;
 import io.github.dkamx.fearless.visitors.XSigVisitor;
-import java.io.IOException;
+import io.github.dkamx.fearless.visitors.XTypeVisitor;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,13 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.Token;
-import org.eclipse.lsp4j.SemanticTokenTypes;
-import org.eclipse.lsp4j.SemanticTokens;
-import org.eclipse.lsp4j.SemanticTokensLegend;
-import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
-import parser.Parser;
 
 /**
  * Low level completion logic.
@@ -39,11 +33,24 @@ public class CompletionLogic {
         .filter(dec -> !dec.lambda().meths().isEmpty())
         .collect(Collectors.toMap(
             dec -> dec.name().name(),
-            dec -> dec.lambda().meths().stream()
-                .map(meth -> meth.name().name())
-                .collect(Collectors.toSet()),
+//            dec -> dec.lambda().meths().stream()
+//                .map(meth -> meth.name().name())
+//                .collect(Collectors.toSet()),
+            dec -> {
+              var list = new ArrayList<Meth>();
+              collectMethod(program, dec.name(), list);
+              return list.stream()
+                  .map(meth -> meth.name().name())
+                  .collect(Collectors.toSet());
+            },
             (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toSet())
         ));
+  }
+
+  static void collectMethod(Program program, DecId decId, ArrayList<Meth> list) {
+    var lambda = program.ds().get(decId).lambda();
+    list.addAll(lambda.meths());
+    lambda.its().forEach(it -> collectMethod(program, it.name(), list));
   }
 
   /**
@@ -76,10 +83,40 @@ public class CompletionLogic {
     return visitor.getResult();
   }
 
+  public static Map<String, String> collectXType(Program program, String uri) {
+    assert !program.ds().isEmpty();
+    var decs = findDecs(program, uri);
+    var visitor = new XTypeVisitor();
+    decs.forEach(dec -> dec.lambda().accept(visitor));
+    return visitor.getResult();
+  }
+
   public static List<Dec> findDecs(Program program, String uri) {
     return program.ds().values().stream()
         .filter(dec -> isCurrentFile(dec, uri))
         .toList();
+  }
+
+  public static String assistType(String content, CodeNode node) {
+//    if (!XNode.type.equals(Type.X)) {
+//      return content;
+//    }
+
+    var start = node.start;
+    var end = node.end;
+    var lines = content.split("\n");
+    var before = new StringBuilder();
+    for (int i = 0; i < start.getLine(); i++) {
+      before.append(lines[i]).append("\n");
+    }
+    before.append(lines[start.getLine()], 0, start.getCharacter());
+    var after = new StringBuilder();
+    after.append(lines[end.getLine()].substring(end.getCharacter())).append("\n");
+    for (int i = end.getLine() + 1; i < lines.length; i++) {
+      after.append(lines[i]).append("\n");
+    }
+
+    return before + "base.Id.id(" + node.content + ")" + after;
   }
 
   public static boolean isCurrentFile(HasPos dec, String uri) {
