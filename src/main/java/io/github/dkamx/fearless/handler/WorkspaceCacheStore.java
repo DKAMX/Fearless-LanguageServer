@@ -12,6 +12,7 @@ import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent;
 public class WorkspaceCacheStore {
 
   public static final Map<String, Program> PROGRAMS = new HashMap<>();
+  public static final Map<String, ProgramInfo> PROGRAMS_INFO = new HashMap<>();
   private static final Set<String> WORKSPACE_FOLDERS = new HashSet<>();
 
   public static void addWorkspaceFolder(List<WorkspaceFolder> folders) {
@@ -32,5 +33,13 @@ public class WorkspaceCacheStore {
 
   public static Program getProgram(String fileUri) {
     return PROGRAMS.get(getWorkspaceFolder(fileUri));
+  }
+
+  public static ProgramInfo getProgramInfo(String fileUri) {
+    return PROGRAMS_INFO.get(getWorkspaceFolder(fileUri));
+  }
+
+  public static boolean hasProgram(String fileUri) {
+    return PROGRAMS.containsKey(getWorkspaceFolder(fileUri));
   }
 }

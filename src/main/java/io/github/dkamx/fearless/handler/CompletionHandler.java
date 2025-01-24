@@ -3,6 +3,7 @@ package io.github.dkamx.fearless.handler;
 import io.github.dkamx.fearless.FearlessLanguageServer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -40,16 +41,18 @@ public class CompletionHandler {
   }
 
   List<CompletionItem> completeType(String uri) {
-    var program = WorkspaceCacheStore.getProgram(uri);
-    if (program == null) {
-      program = server.getCompilationHandler().build(uri);
-    }
-    var list = program.ds().values().stream()
-        .map(dec -> dec.name().name())
-        .distinct()
-        .toList();
     // TODO cut full path with alias
+    var list = WorkspaceCacheStore.getProgramInfo(uri).types().keySet().stream().toList();
     return createItemList(list, CompletionItemKind.Class);
+  }
+
+  List<CompletionItem> completeMethod(String uri) {
+    var info = WorkspaceCacheStore.getProgramInfo(uri);
+    var list = info.types().keySet().stream().toList().stream()
+        .map(info::getMethods)
+        .flatMap(Set::stream)
+        .toList();
+    return createItemList(list, CompletionItemKind.Method);
   }
 
   public List<CompletionItem> handle(String uri, Position position) {
@@ -57,6 +60,9 @@ public class CompletionHandler {
     server.infoMessage("handle\n%s %s".formatted(uri, position));
     var list = new ArrayList<CompletionItem>(completeAliasKeyword());
     list.addAll(completeKeyword());
+    if (!WorkspaceCacheStore.hasProgram(uri)) {
+      server.getCompilationHandler().build(uri);
+    }
     list.addAll(completeType(uri));
     return list;
   }

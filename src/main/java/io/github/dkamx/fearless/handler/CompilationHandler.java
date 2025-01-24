@@ -53,6 +53,7 @@ public class CompilationHandler {
     program = internalBuild(io);
     if (program != null) {
       WorkspaceCacheStore.PROGRAMS.put(folderUri, program);
+      WorkspaceCacheStore.PROGRAMS_INFO.put(folderUri, CompletionLogic.collectProgramInfo(program));
     }
     return program;
   }
