@@ -11,7 +11,6 @@ public class FearlessWorkspaceService implements WorkspaceService {
 
   private static final Logger LOGGER = Logger.getLogger(FearlessWorkspaceService.class.getName());
   private final FearlessLanguageServer server;
-  private WorkspaceCacheStore workspaceStore;
 
   public FearlessWorkspaceService(FearlessLanguageServer server) {
     this.server = server;
@@ -33,6 +32,6 @@ public class FearlessWorkspaceService implements WorkspaceService {
   public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
     LOGGER.info("didChangeWorkspaceFolders\n%s".formatted(params));
     server.infoMessage("didChangeWorkspaceFolders\n%s".formatted(params));
-    workspaceStore.handleWorkspaceFoldersChange(params.getEvent());
+    WorkspaceCacheStore.handleWorkspaceFoldersChange(params.getEvent());
   }
 }
