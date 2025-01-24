@@ -29,4 +29,8 @@ public class WorkspaceCacheStore {
         .findFirst()
         .orElse(null);
   }
+
+  public static Program getProgram(String fileUri) {
+    return PROGRAMS.get(getWorkspaceFolder(fileUri));
+  }
 }

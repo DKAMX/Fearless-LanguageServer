@@ -1,6 +1,7 @@
 package io.github.dkamx.fearless;
 
 import io.github.dkamx.fearless.handler.CompilationHandler;
+import io.github.dkamx.fearless.handler.CompletionHandler;
 import io.github.dkamx.fearless.handler.SemanticTokensHandler;
 import io.github.dkamx.fearless.handler.WorkspaceCacheStore;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +32,7 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     WorkspaceCacheStore.addWorkspaceFolder(initializeParams.getWorkspaceFolders());
     // register server capabilities
     var serverCapabilities = new ServerCapabilities();
+    serverCapabilities.setCompletionProvider(CompletionHandler.PROVIDER);
     serverCapabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
     return CompletableFuture.completedFuture(new InitializeResult(serverCapabilities));
   }
