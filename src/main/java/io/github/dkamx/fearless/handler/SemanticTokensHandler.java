@@ -21,7 +21,8 @@ public class SemanticTokensHandler {
   public static final List<String> TOKEN_TYPES = List.of(SemanticTokenTypes.Class,
       SemanticTokenTypes.Comment,
       SemanticTokenTypes.Keyword,
-      SemanticTokenTypes.Method);
+      SemanticTokenTypes.Method,
+      SemanticTokenTypes.Variable);
   private static final Logger LOGGER = Logger.getLogger(SemanticTokensHandler.class.getName());
 
   static {
@@ -73,11 +74,12 @@ public class SemanticTokensHandler {
    */
   public static String getTokenTypeByName(String symbolicName) {
     return switch (symbolicName) {
-      case "FullCM" -> SemanticTokenTypes.Class;
+      case "FullCN" -> SemanticTokenTypes.Class;
       case "BlockComment", "LineComment" -> SemanticTokenTypes.Comment;
       case "Mut", "ReadH", "MutH", "ReadImm", "Read", "Iso", "Imm", "Alias", "As", "Pack" ->
           SemanticTokenTypes.Keyword;
-      case "MName" -> SemanticTokenTypes.Method;
+//      case "MName" -> SemanticTokenTypes.Method;
+//      case "X" -> SemanticTokenTypes.Variable;
       default -> null;
     };
   }
@@ -93,7 +95,10 @@ public class SemanticTokensHandler {
     var tokens = lexer.getAllTokens().stream()
         .filter(token -> {
           var type = getTokenTypeByName(lexer.getVocabulary().getSymbolicName(token.getType()));
-          return SemanticTokenTypes.Keyword.equals(type) || SemanticTokenTypes.Comment.equals(type);
+          if (type == null) {
+            return false;
+          }
+          return TOKEN_TYPES.contains(type);
         })
         .toList();
     return new SemanticTokens(encodeTokens(lexer, tokens));
