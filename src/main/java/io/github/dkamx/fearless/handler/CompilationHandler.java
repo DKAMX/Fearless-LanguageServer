@@ -41,10 +41,10 @@ public class CompilationHandler {
         new Position(pos.line(), pos.column()));
   }
 
-  public Program build(String fileUri) {
-    LOGGER.info("build\n%s".formatted(fileUri));
-    server.infoMessage("build\n%s".formatted(fileUri));
-    var folderUri = WorkspaceCacheStore.getWorkspaceFolder(fileUri);
+  public Program build(String uri) {
+    LOGGER.info("build\n%s".formatted(uri));
+    server.infoMessage("build\n%s".formatted(uri));
+    var folderUri = WorkspaceCacheStore.getWorkspaceFolder(uri);
     Program program = null;
     if (folderUri == null) {
       return program;
@@ -61,16 +61,16 @@ public class CompilationHandler {
    * Build the program with substituted file content. This is intended for type assist with
    * variable.
    */
-  public Program build(String fileUri, String fileContent) {
-    LOGGER.info("build (type assist)\n%s".formatted(fileUri));
-    server.infoMessage("build (type assist)\n%s".formatted(fileUri));
-    var uri = WorkspaceCacheStore.getWorkspaceFolder(fileUri);
+  public Program build(String uri, String content) {
+    LOGGER.info("build (type assist)\n%s".formatted(uri));
+    server.infoMessage("build (type assist)\n%s".formatted(uri));
+    var folderUri = WorkspaceCacheStore.getWorkspaceFolder(uri);
     Program program = null;
-    if (uri == null) {
+    if (folderUri == null) {
       return program;
     }
-    var io = InputOutput.userFolder(null, List.of(), Path.of(URI.create(uri)));
-    io = replaceFileContent(io, fileUri, fileContent);
+    var io = InputOutput.userFolder(null, List.of(), Path.of(URI.create(folderUri)));
+    io = replaceFileContent(io, uri, content);
     program = internalBuild(io);
     return program;
   }
