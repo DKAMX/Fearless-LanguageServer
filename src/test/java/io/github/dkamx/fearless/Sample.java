@@ -4,8 +4,9 @@ public class Sample {
 
   public static final String PROGRAM_HEADER = """
       package test
-      alias base.Main as Main,
       alias base.Block as Block,
+      alias base.Main as Main,
+      alias base.Void as Void,
       alias base.caps.UnrestrictedIO as UnrestrictedIO,
       """;
 
@@ -15,11 +16,10 @@ public class Sample {
 
   public static final String HELLO_DEBUG = """
       package test
-      Test:Main {sys -> base.Debug.println("Hello, World!")}//OK
+      Test:Main {sys -> base.Debug.println("Hello, World!")}
       """;
 
   public static final String HELLO_BLOCK1 = PROGRAM_HEADER + """
-      alias base.Block as Block,
       Test:Main {sys -> Block#
         .let io = {UnrestrictedIO#sys}
         .return {io.println("Hello, World!")}
@@ -27,7 +27,6 @@ public class Sample {
       """;
 
   public static final String HELLO_BLOCK2 = PROGRAM_HEADER + """
-      alias base.Void as Void,
       Test:Main {sys -> Block#
         .let io = {UnrestrictedIO#sys}
         .do {io.println("Hello, World!")}
@@ -66,7 +65,6 @@ public class Sample {
       alias base.Main as Main,
       alias base.caps.UnrestrictedIO as , // error
       Test:Main {sys -> UnrestrictedIO#sys.println("Hello, World!")}
-      //prints Hello, World!
       """;
 
   public static final String LIST = PROGRAM_HEADER + """
@@ -77,7 +75,6 @@ public class Sample {
         .do {data.flow.map{e -> e}}
         .return {io.println("Hello, World!")}
       }
-      //prints Hello, World!
       """;
 
   public static final String LIST_CMPL = PROGRAM_HEADER + """
@@ -88,7 +85,6 @@ public class Sample {
         .do {data.flow.map{e -> base.Id.id(e)}}
         .return {io.println("Hello, World!")}
       }
-      //prints Hello, World!
       """;
 
   public static final String LIST2 = PROGRAM_HEADER + """
@@ -99,7 +95,6 @@ public class Sample {
         .do {data.flow.map{e -> e.str}}
         .return {io.println("Hello, World!")}
       }
-      //prints Hello, World!
       """;
 
   public static final String LIST2_CMPL = PROGRAM_HEADER + """
@@ -110,17 +105,25 @@ public class Sample {
         .do {data.flow.map{e -> base.Id.id(e.str)}}
         .return {io.println("Hello, World!")}
       }
-      //prints Hello, World!
       """;
 
   public static final String LIST_CMPL_BLOCK = PROGRAM_HEADER + """
       alias base.List as List,
-      Test:Main {sys -> Id.id(Block#
+      Test:Main {sys -> base.Id.id(Block#
         .let io = {UnrestrictedIO#sys}
         .let data = {List#(1, 2, 3, 4)}
         .do {data.flow.map{e -> e}})
         .return {io.println("Hello, World!")}
       }
-      //prints Hello, World!
+      """;
+
+  public static final String LIST_CMPL2 = PROGRAM_HEADER + """
+      alias base.List as List,
+      Test:Main {sys -> Block#
+        .let io = {UnrestrictedIO#sys}
+        .let data = {List#(1, 2, 3, 4)}
+        .do {base.Id.id(data.flow.map{e -> e})}
+        .return {io.println("Hello, World!")}
+      }
       """;
 }
