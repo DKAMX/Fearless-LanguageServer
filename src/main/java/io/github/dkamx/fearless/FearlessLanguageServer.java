@@ -11,6 +11,7 @@ import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
@@ -34,6 +35,7 @@ public class FearlessLanguageServer implements LanguageServer, LanguageClientAwa
     var serverCapabilities = new ServerCapabilities();
     serverCapabilities.setCompletionProvider(CompletionHandler.PROVIDER);
     serverCapabilities.setSemanticTokensProvider(SemanticTokensHandler.PROVIDER);
+    serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full);
     return CompletableFuture.completedFuture(new InitializeResult(serverCapabilities));
   }
 
