@@ -41,21 +41,18 @@ public class CompilationHandler {
         new Position(pos.line(), pos.column()));
   }
 
-  public Program build(String uri) {
-    LOGGER.info("build\n%s".formatted(uri));
-    server.infoMessage("build\n%s".formatted(uri));
-    var folderUri = WorkspaceCacheStore.getWorkspaceFolder(uri);
-    Program program = null;
-    if (folderUri == null) {
-      return program;
-    }
-    var io = InputOutput.userFolder(null, List.of(), Path.of(URI.create(folderUri)));
-    program = internalBuild(io);
-    if (program != null) {
-      WorkspaceCacheStore.PROGRAMS.put(folderUri, program);
-      WorkspaceCacheStore.PROGRAMS_INFO.put(folderUri, CompletionLogic.collectProgramInfo(program));
-    }
-    return program;
+  static InputOutput replaceFileContent(InputOutput io, String uri, String content) {
+    var inputFiles = io.inputFiles().stream()
+        .map(parser -> {
+          if (parser.fileName().equals(Path.of(URI.create(uri)))) {
+            return new Parser(parser.fileName(), content);
+          }
+          return parser;
+        })
+        .toList();
+    io = new FieldsInputOutput(io.entry(), io.commandLineArguments(), io.baseDir(), io.magicDir(),
+        inputFiles, io.output(), io.cachedBase(), io.cachedFiles(), io.defaultAliases());
+    return io;
   }
 
   /**
@@ -73,6 +70,23 @@ public class CompilationHandler {
     var io = InputOutput.userFolder(null, List.of(), Path.of(URI.create(folderUri)));
     io = replaceFileContent(io, uri, content);
     program = internalBuild(io);
+    return program;
+  }
+
+  public Program build(String uri) {
+    LOGGER.info("build\n%s".formatted(uri));
+    server.infoMessage("build\n%s".formatted(uri));
+    var folderUri = WorkspaceCacheStore.getWorkspaceFolder(uri);
+    Program program = null;
+    if (folderUri == null) {
+      return program;
+    }
+    var io = InputOutput.userFolder(null, List.of(), Path.of(URI.create(folderUri)));
+    program = internalBuild(io);
+    if (program != null) {
+      WorkspaceCacheStore.PROGRAMS.put(folderUri, program);
+      WorkspaceCacheStore.PROGRAMS_INFO.put(folderUri, CompletionLogic.collectProgramInfo(program));
+    }
     return program;
   }
 
@@ -108,19 +122,5 @@ public class CompilationHandler {
     diagnosedFiles.add(uri);
     server.getClient().publishDiagnostics(
         new PublishDiagnosticsParams(uri, List.of(new Diagnostic(toRange(pos), message))));
-  }
-
-  InputOutput replaceFileContent(InputOutput io, String uri, String content) {
-    var inputFiles = io.inputFiles().stream()
-        .map(parser -> {
-          if (parser.fileName().equals(Path.of(URI.create(uri)))) {
-            return new Parser(parser.fileName(), content);
-          }
-          return parser;
-        })
-        .toList();
-    io = new FieldsInputOutput(io.entry(), io.commandLineArguments(), io.baseDir(), io.magicDir(),
-        inputFiles, io.output(), io.cachedBase(), io.cachedFiles(), io.defaultAliases());
-    return io;
   }
 }
