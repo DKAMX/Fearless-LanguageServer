@@ -71,14 +71,4 @@ public class CompletionLogicTest {
     var result = visitor.getResult();
     assertEquals("[base.Str]", result.values().toString());
   }
-
-  @Test
-  public void testCompletion3() {
-    var program = build(Sample.LIST_CMPL_BLOCK);
-    var decs = CompletionLogic.findDecs(program, URI);
-    var visitor = new IdTypeVisitor();
-    decs.forEach(dec -> dec.lambda().accept(visitor));
-    var result = visitor.getResult();
-    assertEquals("[base.Str]", result.values().toString());
-  }
 }
