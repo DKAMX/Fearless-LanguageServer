@@ -73,6 +73,9 @@ public class CompilationHandler {
     return program;
   }
 
+  /**
+   * Build the program and update error display (if build fails).
+   */
   public Program build(String uri) {
     LOGGER.info("build\n%s".formatted(uri));
     server.infoMessage("build\n%s".formatted(uri));

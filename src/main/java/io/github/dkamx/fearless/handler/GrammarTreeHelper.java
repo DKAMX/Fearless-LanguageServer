@@ -17,10 +17,18 @@ public class GrammarTreeHelper {
     return new FearlessParser(new CommonTokenStream(lexer));
   }
 
+  /**
+   * Find the minimal expression where the cursor is currently touching, that is cursor is placed at
+   * the end of the expression.
+   */
   public static Range findMinimalE(String content, Position position) {
     return new MinimalEVisitor(position).visit(createParser(content).nudeProgram());
   }
 
+  /**
+   * Find the minimal expression where the cursor is placed within and the cursor is not placed at
+   * the front or end position.
+   */
   public static Range findMinimalEWithin(String content, Position position) {
     return new MinimalEWithinVisitor(position).visit(createParser(content).nudeProgram());
   }

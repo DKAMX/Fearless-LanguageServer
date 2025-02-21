@@ -49,6 +49,7 @@ public class CompletionHandler {
   public List<CompletionItem> completeMethod(String uri, Position position) {
     var list = new ArrayList<CompletionItem>();
     var content = WorkspaceCacheStore.getFileContent(uri);
+    // wrap selected code with helper method (base.Id.id)
     var range = GrammarTreeHelper.findMinimalE(content, position);
     if (range == null) {
       return list;
@@ -58,6 +59,7 @@ public class CompletionHandler {
     if (program == null) {
       return list;
     }
+    // resolve type information
     var decs = CompletionLogic.findDecs(program, uri);
     var visitor = new IdTypeVisitor();
     decs.forEach(dec -> dec.lambda().accept(visitor));
